@@ -174,7 +174,7 @@
     <section class="mb-12 text-center">
       <h2 class="text-3xl font-bold mb-4 text-shadow-lg">经典贪吃蛇，重温童年回忆</h2>
       <p class="max-w-2xl mx-auto text-gray-300">
-        控制蛇的移动，吃食物长大，避免撞到墙壁和自己的身体。挑战最高分，成为贪吃蛇大师！
+        控制蛇的移动，吃食物长大，可以随意撞墙穿梭。挑战最高分，成为贪吃蛇大师！
       </p>
     </section>
 
@@ -522,31 +522,31 @@
             <tbody id="leaderboardBody">
               <tr class="border-b border-gray-700 hover:bg-gray-700">
                 <td class="py-3 px-4"><i class="fa fa-trophy text-yellow-500 mr-2"></i>1</td>
-                <td class="py-3 px-4">贪吃蛇大师</td>
+                <td class="py-3 px-4">不可逾越的李金池</td>
                 <td class="py-3 px-4 font-bold">1250</td>
                 <td class="py-3 px-4">2025-07-21</td>
               </tr>
               <tr class="border-b border-gray-700 hover:bg-gray-700">
                 <td class="py-3 px-4"><i class="fa fa-trophy text-gray-400 mr-2"></i>2</td>
-                <td class="py-3 px-4">游戏爱好者</td>
+                <td class="py-3 px-4"> 淘宝用户 114514</td>
                 <td class="py-3 px-4 font-bold">980</td>
-                <td class="py-3 px-4">2025-07-20</td>
+                <td class="py-3 px-4">2025-07-21</td>
               </tr>
               <tr class="border-b border-gray-700 hover:bg-gray-700">
                 <td class="py-3 px-4"><i class="fa fa-trophy text-amber-700 mr-2"></i>3</td>
-                <td class="py-3 px-4">蛇蛇争霸</td>
+                <td class="py-3 px-4">丁亮</td>
                 <td class="py-3 px-4 font-bold">850</td>
-                <td class="py-3 px-4">2025-07-19</td>
+                <td class="py-3 px-4">2025-07-21</td>
               </tr>
               <tr class="border-b border-gray-700 hover:bg-gray-700">
                 <td class="py-3 px-4">4</td>
-                <td class="py-3 px-4">休闲玩家</td>
+                <td class="py-3 px-4">tim</td>
                 <td class="py-3 px-4 font-bold">720</td>
                 <td class="py-3 px-4">2025-07-18</td>
               </tr>
               <tr class="border-b border-gray-700 hover:bg-gray-700">
                 <td class="py-3 px-4">5</td>
-                <td class="py-3 px-4">初学者</td>
+                <td class="py-3 px-4">coke</td>
                 <td class="py-3 px-4 font-bold">650</td>
                 <td class="py-3 px-4">2025-07-17</td>
               </tr>
@@ -917,6 +917,45 @@
       } else {
         elements.mobileControls.classList.add('hidden');
       }
+    }
+    
+    // 初始化移动端控制
+    function initMobileControls() {
+      // 上
+      elements.mobileUp.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        changeDirection(config.directions.UP);
+      });
+      
+      // 下
+      elements.mobileDown.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        changeDirection(config.directions.DOWN);
+      });
+      
+      // 左
+      elements.mobileLeft.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        changeDirection(config.directions.LEFT);
+      });
+      
+      // 右
+      elements.mobileRight.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        changeDirection(config.directions.RIGHT);
+      });
+      
+      // 暂停
+      elements.mobilePause.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        togglePause();
+      });
+      
+      // 重新开始
+      elements.mobileRestart.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        restartGame();
+      });
     }
 
     // 开始游戏
@@ -1399,6 +1438,22 @@
       console.log(`音效已${isEnabled ? '开启' : '关闭'}`);
     }
 
+    // 切换穿墙模式
+    function toggleWallMode() {
+      const isEnabled = elements.wallModeToggle.checked;
+      
+      // 更新开关样式
+      updateToggleSwitches();
+      
+      // 保存设置
+      saveSettings();
+      
+      // 更新游戏状态
+      game.wallMode = isEnabled;
+      
+      console.log(`穿墙模式已${isEnabled ? '开启' : '关闭'}`);
+    }
+    
     // 切换网格
     function toggleGrid() {
       const isEnabled = elements.gridToggle.checked;
@@ -1502,6 +1557,12 @@
       if (game.ctx) {
         game.ctx.fillStyle = isDarkMode ? '#1F2937' : '#F3F4F6';
         game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
+        
+        // 如果游戏正在运行，重绘游戏元素
+        if (game.isRunning) {
+          drawSnake();
+          drawFood();
+        }
       }
     }
 
@@ -1547,7 +1608,7 @@
       leaderboard.push({
         player: '玩家',
         score: score,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toLocaleDateString('zh-CN')
       });
       
       // 按分数排序
