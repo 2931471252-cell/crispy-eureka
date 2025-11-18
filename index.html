@@ -874,7 +874,11 @@
       // 设置深色模式
       if (savedSettings.darkMode !== undefined) {
         elements.darkModeToggle.checked = savedSettings.darkMode;
-        toggleDarkMode();
+        // 直接更新UI，不调用toggleDarkMode以避免循环调用
+        updateDarkModeUI(savedSettings.darkMode);
+      } else {
+        // 默认使用深色模式
+        updateDarkModeUI(true);
       }
       
       // 更新开关样式
@@ -984,8 +988,21 @@
         y: game.snake[0].y + game.direction.y
       };
       
-      // 检查碰撞
-      if (checkCollision(head)) {
+      // 穿墙逻辑：当蛇碰到边界时，从对面穿回来
+      if (head.x < 0) {
+        head.x = config.gridSize - 1;
+      } else if (head.x >= config.gridSize) {
+        head.x = 0;
+      }
+      
+      if (head.y < 0) {
+        head.y = config.gridSize - 1;
+      } else if (head.y >= config.gridSize) {
+        head.y = 0;
+      }
+      
+      // 检查自身碰撞
+      if (checkSelfCollision(head)) {
         endGame();
         return;
       }
@@ -1153,27 +1170,14 @@
       return game.snake.some(segment => segment.x === position.x && segment.y === position.y);
     }
 
-    // 检查碰撞
-    function checkCollision(head) {
-      // 检查墙壁碰撞
-      if (
-        head.x < 0 ||
-        head.x >= config.gridSize ||
-        head.y < 0 ||
-        head.y >= config.gridSize
-      ) {
-        playSound('wall');
-        return true;
-      }
-      
-      // 检查自身碰撞
+    // 检查自身碰撞
+    function checkSelfCollision(head) {
       for (let i = 1; i < game.snake.length; i++) {
         if (head.x === game.snake[i].x && head.y === game.snake[i].y) {
           playSound('self');
           return true;
         }
       }
-      
       return false;
     }
 
@@ -1425,11 +1429,79 @@
       
       // 更新页面样式
       if (isEnabled) {
-        document.body.classList.add('bg-gradient-to-br', 'from-dark', 'to-gray-800');
-        document.body.classList.remove('bg-gradient-to-br', 'from-gray-100', 'to-gray-200');
+        // 切换到深色模式
+        document.body.classList.remove('bg-gradient-to-br', 'from-gray-100', 'to-gray-200', 'text-dark');
+        document.body.classList.add('bg-gradient-to-br', 'from-dark', 'to-gray-800', 'text-light');
+        
+        // 更新其他UI元素
+        updateDarkModeUI(true);
       } else {
-        document.body.classList.remove('bg-gradient-to-br', 'from-dark', 'to-gray-800');
-        document.body.classList.add('bg-gradient-to-br', 'from-gray-100', 'to-gray-200');
+        // 切换到浅色模式
+        document.body.classList.remove('bg-gradient-to-br', 'from-dark', 'to-gray-800', 'text-light');
+        document.body.classList.add('bg-gradient-to-br', 'from-gray-100', 'to-gray-200', 'text-dark');
+        
+        // 更新其他UI元素
+        updateDarkModeUI(false);
+      }
+      
+      // 如果游戏正在运行，重绘游戏
+      if (game.isRunning) {
+        drawGame();
+      }
+    }
+    
+    // 更新深色模式UI
+    function updateDarkModeUI(isDarkMode) {
+      // 更新头部和导航
+      const header = document.querySelector('header');
+      const navLinks = document.querySelectorAll('nav a');
+      
+      if (isDarkMode) {
+        header.classList.add('bg-dark', 'bg-opacity-80', 'border-gray-700');
+        header.classList.remove('bg-gray-100', 'border-gray-300');
+        
+        navLinks.forEach(link => {
+          link.classList.add('text-light', 'hover:text-primary');
+          link.classList.remove('text-dark', 'hover:text-gray-700');
+        });
+      } else {
+        header.classList.remove('bg-dark', 'bg-opacity-80', 'border-gray-700');
+        header.classList.add('bg-gray-100', 'border-gray-300');
+        
+        navLinks.forEach(link => {
+          link.classList.remove('text-light', 'hover:text-primary');
+          link.classList.add('text-dark', 'hover:text-gray-700');
+        });
+      }
+      
+      // 更新卡片和模态框
+      const cards = document.querySelectorAll('.bg-gray-800, .bg-gray-700');
+      const modals = document.querySelectorAll('#howToPlayModal');
+      
+      cards.forEach(card => {
+        if (isDarkMode) {
+          card.classList.add('bg-gray-800', 'bg-opacity-80', 'border-gray-700');
+          card.classList.remove('bg-white', 'border-gray-300');
+        } else {
+          card.classList.remove('bg-gray-800', 'bg-opacity-80', 'border-gray-700');
+          card.classList.add('bg-white', 'border-gray-300');
+        }
+      });
+      
+      modals.forEach(modal => {
+        if (isDarkMode) {
+          modal.querySelector('.bg-gray-800').classList.add('bg-gray-800');
+          modal.querySelector('.bg-gray-800').classList.remove('bg-white');
+        } else {
+          modal.querySelector('.bg-gray-800').classList.remove('bg-gray-800');
+          modal.querySelector('.bg-gray-800').classList.add('bg-white');
+        }
+      });
+      
+      // 更新游戏画布背景
+      if (game.ctx) {
+        game.ctx.fillStyle = isDarkMode ? '#1F2937' : '#F3F4F6';
+        game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height);
       }
     }
 
